@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEO-FIT // Cyberpunk BMI Analyzer 3000</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#080914',
+                            card: 'rgba(15, 23, 42, 0.65)',
+                            neonCyan: '#00f3ff',
+                            neonMagenta: '#ff007f',
+                            neonYellow: '#ffe600',
+                            neonGreen: '#00ff66',
+                            neonOrange: '#ff6600',
+                            neonRed: '#ff0033'
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2s infinite alternate',
+                        'scanline': 'scanline 8s linear infinite',
+                        'float': 'float 6s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%': { filter: 'drop-shadow(0 0 5px rgba(0, 243, 255, 0.4))' },
+                            '100%': { filter: 'drop-shadow(0 0 20px rgba(0, 243, 255, 0.9))' }
+                        },
+                        scanline: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(1000%)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: #05060d;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Glassmorphism Effect */
+        .glass-panel {
+            background: rgba(13, 17, 38, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 243, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-panel-glow {
+            background: rgba(13, 17, 38, 0.75);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.2), inset 0 0 15px rgba(0, 243, 255, 0.1);
+        }
+
+        /* Futuristic Custom Range Sliders */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+            width: 100%;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            background: linear-gradient(90deg, #00f3ff 0%, #ff007f 100%);
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            height: 26px;
+            width: 26px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #00f3ff;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -8px;
+            box-shadow: 0 0 15px #00f3ff, 0 0 25px #00f3ff;
+            transition: all 0.2s ease;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #00f3ff;
+            box-shadow: 0 0 20px #00f3ff, 0 0 35px #ff007f;
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 6px 100%;
+            z-index: 40;
+            opacity: 0.6;
+        }
+
+        /* Cyber Buttons */
+        .cyber-btn {
+            position: relative;
+            clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+            transition: all 0.3s ease;
+        }
+
+        .cyber-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Meter Gauge Arc Animation */
+        .gauge-meter-path {
+            stroke-dasharray: 440;
+            stroke-dashoffset: 440;
+            transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.5s ease;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080914;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00f3ff;
+            border-radius: 3px;
+            box-shadow: 0 0 10px #00f3ff;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen relative flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+    <!-- Background Canvas for Interactive Particles -->
+    <canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+    
+    <!-- Fireworks Overlay Canvas -->
+    <canvas id="fireworks-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-50"></canvas>
+
+    <!-- CRT Scanlines Overlay -->
+    <div class="scanlines"></div>
+
+    <!-- Floating Top Utility Bar -->
+    <div class="fixed top-4 right-4 z-50 flex items-center gap-3">
+        <!-- Sound FX Toggle Button -->
+        <button id="btn-sound" class="glass-panel p-3 rounded-xl hover:border-cyan-400 text-cyan-400 hover:text-cyan-300 transition-all flex items-center justify-center shadow-lg" title="Toggle Sound Effects">
+            <i class="fa-solid fa-volume-high text-lg" id="sound-icon"></i>
+        </button>
+
+        <!-- Theme Toggle Button -->
+        <button id="btn-theme" class="glass-panel p-3 rounded-xl hover:border-magenta-400 text-pink-400 hover:text-pink-300 transition-all flex items-center justify-center shadow-lg" title="Toggle Futuristic Neon Glow Mode">
+            <i class="fa-solid fa-bolt text-lg"></i>
+        </button>
+    </div>
+
+    <div class="relative z-10 container mx-auto px-4 py-6 max-w-7xl">
+        <!-- Header Section -->
+        <header class="text-center mb-8 relative">
+            <div class="inline-block relative">
+                <span class="text-xs font-orbitron tracking-widest text-cyan-400 uppercase bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-500/30 mb-2 inline-block">
+                    <i class="fa-solid fa-microchip mr-1 animate-pulse"></i> Biometric Cyber System v3.0
+                </span>
+                <h1 class="text-4xl sm:text-6xl font-black font-orbitron tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-300 drop-shadow-[0_0_25px_rgba(0,243,255,0.4)]">
+                    NEO-FIT // BMI ANALYZER
+                </h1>
+                <p class="text-slate-400 text-sm sm:text-base mt-2 font-medium max-w-xl mx-auto">
+                    Advanced holographic body mass biometric calculator with real-time neural diagnosis & custom health recommendations.
+                </p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- LEFT PANEL: User Input Controls (7 Columns) -->
+            <section class="lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+                <div class="absolute -top-12 -left-12 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <!-- Unit System Toggle -->
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-cyan-400 text-xl"></i>
+                        <h2 class="text-xl font-orbitron font-bold text-slate-200">BIOMETRIC PARAMETERS</h2>
+                    </div>
+
+                    <!-- Metric vs Imperial Switch -->
+                    <div class="bg-slate-900/80 p-1.5 rounded-xl border border-slate-700 flex gap-1">
+                        <button id="unit-metric" class="px-4 py-1.5 rounded-lg text-xs font-orbitron font-bold transition-all bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-[0_0_15px_rgba(0,243,255,0.5)]">
+                            METRIC (cm/kg)
+                        </button>
+                        <button id="unit-imperial" class="px-4 py-1.5 rounded-lg text-xs font-orbitron font-bold text-slate-400 hover:text-white transition-all">
+                            IMPERIAL (in/lbs)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-orbitron tracking-wider text-slate-400 uppercase mb-3">SELECT GENDER / AVATAR</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="gender-male" class="gender-btn glass-panel-glow rounded-2xl p-4 flex items-center justify-center gap-3 border-cyan-400 text-cyan-300 transition-all active:scale-95">
+                            <i class="fa-solid fa-mars text-2xl text-cyan-400"></i>
+                            <span class="font-orbitron font-bold tracking-wide text-sm">MALE</span>
+                        </button>
+                        <button id="gender-female" class="gender-btn glass-panel rounded-2xl p-4 flex items-center justify-center gap-3 border-slate-700 text-slate-400 hover:border-pink-500 hover:text-pink-300 transition-all active:scale-95">
+                            <i class="fa-solid fa-venus text-2xl text-pink-400"></i>
+                            <span class="font-orbitron font-bold tracking-wide text-sm">FEMALE</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-6 bg-slate-900/40 p-5 rounded-2xl border border-slate-800/80">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-orbitron tracking-wider text-slate-400 uppercase">AGE (YEARS)</label>
+                        <div class="flex items-center gap-2">
+                            <button class="step-btn w-8 h-8 rounded-lg bg-slate-800 hover:bg-cyan-500 hover:text-black border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center transition-all" data-target="age" data-step="-1">-</button>
+                            <input type="number" id="age-val" value="25" min="1" max="120" class="w-16 bg-slate-950 border border-cyan-500/50 rounded-lg py-1 px-2 text-center font-orbitron text-cyan-400 font-bold text-lg focus:outline-none focus:border-cyan-400">
+                            <button class="step-btn w-8 h-8 rounded-lg bg-slate-800 hover:bg-cyan-500 hover:text-black border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center transition-all" data-target="age" data-step="1">+</button>
+                        </div>
+                    </div>
+                    <input type="range" id="age-slider" min="1" max="120" value="25" class="w-full">
+                </div>
+
+                <div class="mb-6 bg-slate-900/40 p-5 rounded-2xl border border-slate-800/80">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-orbitron tracking-wider text-slate-400 uppercase">
+                            HEIGHT (<span id="height-unit-label">cm</span>)
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <button class="step-btn w-8 h-8 rounded-lg bg-slate-800 hover:bg-cyan-500 hover:text-black border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center transition-all" data-target="height" data-step="-1">-</button>
+                            <input type="number" id="height-val" value="175" min="50" max="250" class="w-20 bg-slate-950 border border-cyan-500/50 rounded-lg py-1 px-2 text-center font-orbitron text-cyan-400 font-bold text-lg focus:outline-none focus:border-cyan-400">
+                            <button class="step-btn w-8 h-8 rounded-lg bg-slate-800 hover:bg-cyan-500 hover:text-black border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center transition-all" data-target="height" data-step="1">+</button>
+                        </div>
+                    </div>
+                    <input type="range" id="height-slider" min="50" max="250" value="175" class="w-full">
+                </div>
+
+                <div class="mb-8 bg-slate-900/40 p-5 rounded-2xl border border-slate-800/80">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-orbitron tracking-wider text-slate-400 uppercase">
+                            WEIGHT (<span id="weight-unit-label">kg</span>)
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <button class="step-btn w-8 h-8 rounded-lg bg-slate-800 hover:bg-pink-500 hover:text-black border border-pink-500/30 text-pink-400 font-bold flex items-center justify-center transition-all" data-target="weight" data-step="-1">-</button>
+                            <input type="number" id="weight-val" value="70" min="20" max="300" class="w-20 bg-slate-950 border border-pink-500/50 rounded-lg py-1 px-2 text-center font-orbitron text-pink-400 font-bold text-lg focus:outline-none focus:border-pink-400">
+                            <button class="step-btn w-8 h-8 rounded-lg bg-slate-800 hover:bg-pink-500 hover:text-black border border-pink-500/30 text-pink-400 font-bold flex items-center justify-center transition-all" data-target="weight" data-step="1">+</button>
+                        </div>
+                    </div>
+                    <input type="range" id="weight-slider" min="20" max="200" value="70" class="w-full">
+                </div>
+
+                <!-- Action Button -->
+                <button id="btn-calculate" class="cyber-btn w-full py-4 bg-gradient-to-r from-cyan-500 via-pink-500 to-yellow-400 text-black font-orbitron font-black text-lg tracking-widest uppercase rounded-xl shadow-[0_0_25px_rgba(0,243,255,0.4)] hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-bolt text-xl"></i> ANALYZE BIOMETRICS
+                </button>
+            </section>
+
+            <section class="lg:col-span-5 flex flex-col gap-6">
+                
+                <!-- Main Gauge Card -->
+                <div class="glass-panel rounded-3xl p-6 text-center relative overflow-hidden flex flex-col items-center">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <h2 class="text-xs font-orbitron tracking-widest text-slate-400 uppercase mb-2">NEURAL BMI DIAGNOSIS</h2>
+
+                    <!-- Speedometer Gauge SVG -->
+                    <div class="relative w-64 h-48 flex items-center justify-center my-2">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                            <!-- Outer Gauge Track -->
+                            <circle cx="100" cy="100" r="70" fill="none" stroke="#1e293b" stroke-width="14" stroke-dasharray="440" stroke-dashoffset="110" stroke-linecap="round"></circle>
+                            <!-- Animated Value Arc -->
+                            <circle id="gauge-meter" class="gauge-meter-path" cx="100" cy="100" r="70" fill="none" stroke="#00f3ff" stroke-width="14" stroke-linecap="round"></circle>
+                        </svg>
+
+                        <!-- Centered Score Text -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pt-6">
+                            <span id="bmi-value-text" class="text-5xl font-black font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500 tracking-tight">
+                                22.9
+                            </span>
+                            <span class="text-xs font-orbitron text-slate-400 tracking-wider uppercase mt-1">SCORE</span>
+                        </div>
+                    </div>
+
+                    <!-- Category Status Badge -->
+                    <div id="category-badge" class="mt-1 px-6 py-2 rounded-full font-orbitron font-extrabold text-sm tracking-wider uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse">
+                        NORMAL HEALTHY RANGE
+                    </div>
+
+                    <!-- Body Silhouette Visualization -->
+                    <div class="mt-6 pt-4 border-t border-slate-800/80 w-full flex items-center justify-around">
+                        <div class="text-left">
+                            <span class="text-xs text-slate-400 block font-orbitron">3D MODEL SIMULATION</span>
+                            <span id="silhouette-label" class="text-sm font-bold text-cyan-400">Ideal Frame</span>
+                        </div>
+                        
+                        <!-- Dynamic SVG Body Silhouette -->
+                        <div class="w-16 h-28 relative flex items-center justify-center">
+                            <svg id="body-silhouette" class="h-full transition-all duration-700 filter drop-shadow-[0_0_8px_rgba(0,243,255,0.5)]" viewBox="0 0 100 200" fill="currentColor">
+                                <!-- Dynamic Path updated via JS -->
+                                <path id="silhouette-path" class="text-cyan-400 transition-all duration-500" d="M50 20 C55 20 60 25 60 30 C60 35 55 40 50 40 C45 40 40 35 40 30 C40 25 45 20 50 20 Z M42 45 L58 45 C64 45 68 55 66 75 L62 120 L66 185 C66 190 60 195 55 195 L52 195 L52 130 L48 130 L48 195 L45 195 C40 195 34 190 34 185 L38 120 L34 75 C32 55 36 45 42 45 Z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-3xl p-6">
+                    <h3 class="text-xs font-orbitron tracking-widest text-slate-400 uppercase mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-heart-pulse text-pink-500"></i> BIOMETRIC RECOMMENDATIONS
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <!-- Ideal Weight -->
+                        <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+                            <span class="text-xs text-slate-400 block">IDEAL WEIGHT</span>
+                            <span id="ideal-weight-val" class="font-orbitron font-bold text-cyan-400 text-base">56.7 - 76.5 kg</span>
+                        </div>
+                        <!-- Water Intake -->
+                        <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+                            <span class="text-xs text-slate-400 block">DAILY WATER TARGET</span>
+                            <span id="water-intake-val" class="font-orbitron font-bold text-blue-400 text-base">2.45 Liters</span>
+                        </div>
+                        <!-- Calories -->
+                        <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+                            <span class="text-xs text-slate-400 block">EST. BMR CALORIES</span>
+                            <span id="bmr-val" class="font-orbitron font-bold text-amber-400 text-base">1,680 kcal</span>
+                        </div>
+                        <!-- Activity Advice -->
+                        <div class="bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+                            <span class="text-xs text-slate-400 block">MACRO RATIO TARGET</span>
+                            <span id="macro-val" class="font-orbitron font-bold text-pink-400 text-base">40/30/30</span>
+                        </div>
+                    </div>
+
+                    <!-- Advice Paragraph -->
+                    <p id="health-advice-text" class="mt-4 text-xs sm:text-sm text-slate-300 bg-cyan-950/30 p-3 rounded-xl border border-cyan-500/20 leading-relaxed">
+                        Your BMI falls into the normal healthy spectrum. Maintain optimal hydration, structured resistance training, and steady macronutrient balance.
+                    </p>
+
+                    <!-- Export Receipt Button -->
+                    <button id="btn-export" class="mt-4 w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 text-xs font-orbitron font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-receipt"></i> GENERATE HOLOGRAPHIC RECEIPT
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <section class="mt-10 glass-panel rounded-3xl p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-pink-500 text-xl"></i>
+                    <h2 class="text-xl font-orbitron font-bold text-slate-200">NEURAL DIAGNOSTIC LOGS</h2>
+                </div>
+                <button id="btn-clear-history" class="text-xs font-orbitron text-red-400 hover:text-red-300 bg-red-950/40 border border-red-500/30 px-3 py-1.5 rounded-lg transition-all">
+                    CLEAR HISTORY
+                </button>
+            </div>
+
+            <!-- History Chart / Bar Visualization Container -->
+            <div id="history-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- Dynamically Populated History Log Cards -->
+            </div>
+        </section>
+    </div>
+
+    <div id="receipt-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-panel-glow max-w-md w-full rounded-3xl p-6 relative text-slate-100 border-cyan-400">
+            <button id="close-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center mb-4">
+                <div class="text-xs font-orbitron text-cyan-400 tracking-widest">CYBERNETIC DIAGNOSTIC TICKET</div>
+                <h3 class="text-2xl font-black font-orbitron text-white mt-1">NEO-FIT MEDICAL CARD</h3>
+                <div class="text-xs text-slate-400" id="receipt-date">2026-10-03 // 16:40 CST</div>
+            </div>
+
+            <div class="bg-slate-950/80 p-4 rounded-2xl border border-cyan-500/30 font-orbitron space-y-3 text-sm my-4">
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">AGE / GENDER:</span>
+                    <span id="receipt-demo" class="text-cyan-400 font-bold">25 YRS / MALE</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">HEIGHT / WEIGHT:</span>
+                    <span id="receipt-metrics" class="text-cyan-400 font-bold">175 cm / 70 kg</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">FINAL BMI SCORE:</span>
+                    <span id="receipt-bmi" class="text-pink-400 font-black text-lg">22.9</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">DIAGNOSIS:</span>
+                    <span id="receipt-status" class="text-emerald-400 font-bold">NORMAL</span>
+                </div>
+            </div>
+
+            <div class="text-center space-y-2">
+                <p class="text-xs text-slate-400">Holographic Biometric Record Saved to Neural Database.</p>
+                <button onclick="window.print()" class="w-full py-3 bg-cyan-500 text-black font-orbitron font-bold rounded-xl hover:bg-cyan-400 transition-all">
+                    PRINT / SAVE PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* --------------------------------------------------------
+         * Web Audio API Sound Effects Engine
+         * -------------------------------------------------------- */
+        class CyberSoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playClick() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.04);
+
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.04);
+            }
+
+            playFanfare() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+
+                    const startTime = this.ctx.currentTime + (idx * 0.08);
+                    gain.gain.setValueAtTime(0.2, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.3);
+                });
+            }
+        }
+
+        const audioFX = new CyberSoundEngine();
+
+        /* --------------------------------------------------------
+         * Canvas Particle & Matrix Cyber Background Engine
+         * -------------------------------------------------------- */
+        const pCanvas = document.getElementById('particle-canvas');
+        const pCtx = pCanvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            pCanvas.width = window.innerWidth;
+            pCanvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * pCanvas.width;
+                this.y = Math.random() * pCanvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.color = Math.random() > 0.5 ? '#00f3ff' : '#ff007f';
+                this.alpha = Math.random() * 0.5 + 0.2;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x < 0 || this.x > pCanvas.width || this.y < 0 || this.y > pCanvas.height) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                pCtx.save();
+                pCtx.globalAlpha = this.alpha;
+                pCtx.fillStyle = this.color;
+                pCtx.shadowBlur = 10;
+                pCtx.shadowColor = this.color;
+                pCtx.beginPath();
+                pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                pCtx.fill();
+                pCtx.restore();
+            }
+        }
+
+        function initParticles() {
+            resizeCanvas();
+            particles = [];
+            for (let i = 0; i < 60; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        /* --------------------------------------------------------
+         * Fireworks Canvas Generator (For Healthy BMI Range)
+         * -------------------------------------------------------- */
+        const fwCanvas = document.getElementById('fireworks-canvas');
+        const fwCtx = fwCanvas.getContext('2d');
+        let fireworks = [];
+
+        function resizeFireworks() {
+            fwCanvas.width = window.innerWidth;
+            fwCanvas.height = window.innerHeight;
+        }
+
+        function triggerFireworks() {
+            resizeFireworks();
+            fireworks = [];
+            for (let i = 0; i < 80; i++) {
+                fireworks.push({
+                    x: fwCanvas.width / 2,
+                    y: fwCanvas.height / 2,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12,
+                    color: `hsl(${Math.random() * 360}, 100%, 60%)`,
+                    alpha: 1,
+                    size: Math.random() * 4 + 2
+                });
+            }
+            animateFireworks();
+        }
+
+        function animateFireworks() {
+            fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+            let alive = false;
+            fireworks.forEach(f => {
+                if (f.alpha > 0) {
+                    alive = true;
+                    f.x += f.vx;
+                    f.y += f.vy;
+                    f.alpha -= 0.02;
+                    fwCtx.save();
+                    fwCtx.globalAlpha = Math.max(0, f.alpha);
+                    fwCtx.fillStyle = f.color;
+                    fwCtx.beginPath();
+                    fwCtx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+                    fwCtx.fill();
+                    fwCtx.restore();
+                }
+            });
+            if (alive) requestAnimationFrame(animateFireworks);
+        }
+
+        /* --------------------------------------------------------
+         * State & Business Logic
+         * -------------------------------------------------------- */
+        let state = {
+            unit: 'metric', // 'metric' or 'imperial'
+            gender: 'male', // 'male' or 'female'
+            age: 25,
+            heightCm: 175,
+            weightKg: 70
+        };
+
+        // DOM Element Cache
+        const elements = {
+            unitMetric: document.getElementById('unit-metric'),
+            unitImperial: document.getElementById('unit-imperial'),
+            genderMale: document.getElementById('gender-male'),
+            genderFemale: document.getElementById('gender-female'),
+            ageVal: document.getElementById('age-val'),
+            ageSlider: document.getElementById('age-slider'),
+            heightVal: document.getElementById('height-val'),
+            heightSlider: document.getElementById('height-slider'),
+            heightUnitLabel: document.getElementById('height-unit-label'),
+            weightVal: document.getElementById('weight-val'),
+            weightSlider: document.getElementById('weight-slider'),
+            weightUnitLabel: document.getElementById('weight-unit-label'),
+            gaugeMeter: document.getElementById('gauge-meter'),
+            bmiText: document.getElementById('bmi-value-text'),
+            categoryBadge: document.getElementById('category-badge'),
+            silhouettePath: document.getElementById('silhouette-path'),
+            silhouetteLabel: document.getElementById('silhouette-label'),
+            idealWeightVal: document.getElementById('ideal-weight-val'),
+            waterIntakeVal: document.getElementById('water-intake-val'),
+            bmrVal: document.getElementById('bmr-val'),
+            macroVal: document.getElementById('macro-val'),
+            healthAdviceText: document.getElementById('health-advice-text'),
+            historyContainer: document.getElementById('history-container'),
+            receiptModal: document.getElementById('receipt-modal')
+        };
+
+        function bindEvents() {
+            // Unit Toggle
+            elements.unitMetric.addEventListener('click', () => switchUnit('metric'));
+            elements.unitImperial.addEventListener('click', () => switchUnit('imperial'));
+
+            // Gender Toggle
+            elements.genderMale.addEventListener('click', () => setGender('male'));
+            elements.genderFemale.addEventListener('click', () => setGender('female'));
+
+            // Sync Inputs with Sliders
+            syncInputSlider('age', 1, 120);
+            syncInputSlider('height', 50, 250);
+            syncInputSlider('weight', 20, 300);
+
+            // Step Buttons (+ / -)
+            document.querySelectorAll('.step-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    audioFX.playClick();
+                    const target = e.currentTarget.dataset.target;
+                    const step = parseInt(e.currentTarget.dataset.step);
+                    if (target === 'age') {
+                        state.age = Math.max(1, Math.min(120, state.age + step));
+                        updateInputs();
+                    } else if (target === 'height') {
+                        state.heightCm = Math.max(50, Math.min(250, state.heightCm + step));
+                        updateInputs();
+                    } else if (target === 'weight') {
+                        state.weightKg = Math.max(20, Math.min(300, state.weightKg + step));
+                        updateInputs();
+                    }
+                    calculateBMI();
+                });
+            });
+
+            // Calculate Button
+            document.getElementById('btn-calculate').addEventListener('click', () => {
+                audioFX.playClick();
+                calculateBMI(true);
+            });
+
+            // Sound Toggle
+            document.getElementById('btn-sound').addEventListener('click', () => {
+                audioFX.enabled = !audioFX.enabled;
+                const icon = document.getElementById('sound-icon');
+                if (audioFX.enabled) {
+                    icon.className = 'fa-solid fa-volume-high';
+                } else {
+                    icon.className = 'fa-solid fa-volume-xmark';
+                }
+            });
+
+            // Export Modal
+            document.getElementById('btn-export').addEventListener('click', openReceiptModal);
+            document.getElementById('close-modal').addEventListener('click', () => {
+                elements.receiptModal.classList.add('hidden');
+            });
+
+            // Clear History
+            document.getElementById('btn-clear-history').addEventListener('click', () => {
+                localStorage.removeItem('neo_bmi_history');
+                renderHistory();
+            });
+        }
+
+        function switchUnit(unit) {
+            audioFX.playClick();
+            state.unit = unit;
+            if (unit === 'metric') {
+                elements.unitMetric.className = "px-4 py-1.5 rounded-lg text-xs font-orbitron font-bold transition-all bg-gradient-to-r from-cyan-500 to-blue-600 text-black shadow-[0_0_15px_rgba(0,243,255,0.5)]";
+                elements.unitImperial.className = "px-4 py-1.5 rounded-lg text-xs font-orbitron font-bold text-slate-400 hover:text-white transition-all";
+                elements.heightUnitLabel.textContent = "cm";
+                elements.weightUnitLabel.textContent = "kg";
+            } else {
+                elements.unitImperial.className = "px-4 py-1.5 rounded-lg text-xs font-orbitron font-bold transition-all bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-[0_0_15px_rgba(255,0,127,0.5)]";
+                elements.unitMetric.className = "px-4 py-1.5 rounded-lg text-xs font-orbitron font-bold text-slate-400 hover:text-white transition-all";
+                elements.heightUnitLabel.textContent = "in";
+                elements.weightUnitLabel.textContent = "lbs";
+            }
+            updateInputs();
+            calculateBMI();
+        }
+
+        function setGender(gender) {
+            audioFX.playClick();
+            state.gender = gender;
+            if (gender === 'male') {
+                elements.genderMale.className = "gender-btn glass-panel-glow rounded-2xl p-4 flex items-center justify-center gap-3 border-cyan-400 text-cyan-300 transition-all active:scale-95";
+                elements.genderFemale.className = "gender-btn glass-panel rounded-2xl p-4 flex items-center justify-center gap-3 border-slate-700 text-slate-400 hover:border-pink-500 hover:text-pink-300 transition-all active:scale-95";
+            } else {
+                elements.genderFemale.className = "gender-btn glass-panel-glow rounded-2xl p-4 flex items-center justify-center gap-3 border-pink-400 text-pink-300 transition-all active:scale-95";
+                elements.genderMale.className = "gender-btn glass-panel rounded-2xl p-4 flex items-center justify-center gap-3 border-slate-700 text-slate-400 hover:border-cyan-500 hover:text-cyan-300 transition-all active:scale-95";
+            }
+            calculateBMI();
+        }
+
+        function syncInputSlider(key, min, max) {
+            const valEl = elements[`${key}Val`];
+            const sliderEl = elements[`${key}Slider`];
+
+            valEl.addEventListener('input', () => {
+                let v = parseFloat(valEl.value) || min;
+                if (state.unit === 'imperial' && key === 'height') v = v * 2.54;
+                if (state.unit === 'imperial' && key === 'weight') v = v / 2.20462;
+                state[key === 'height' ? 'heightCm' : key === 'weight' ? 'weightKg' : 'age'] = v;
+                sliderEl.value = valEl.value;
+                calculateBMI();
+            });
+
+            sliderEl.addEventListener('input', () => {
+                let v = parseFloat(sliderEl.value);
+                valEl.value = v;
+                if (state.unit === 'imperial' && key === 'height') v = v * 2.54;
+                if (state.unit === 'imperial' && key === 'weight') v = v / 2.20462;
+                state[key === 'height' ? 'heightCm' : key === 'weight' ? 'weightKg' : 'age'] = v;
+                calculateBMI();
+            });
+        }
+
+        function updateInputs() {
+            // Age
+            elements.ageVal.value = state.age;
+            elements.ageSlider.value = state.age;
+
+            // Height
+            if (state.unit === 'metric') {
+                elements.heightVal.value = Math.round(state.heightCm);
+                elements.heightSlider.value = Math.round(state.heightCm);
+                elements.heightSlider.min = 50; elements.heightSlider.max = 250;
+            } else {
+                const inches = Math.round(state.heightCm / 2.54);
+                elements.heightVal.value = inches;
+                elements.heightSlider.value = inches;
+                elements.heightSlider.min = 20; elements.heightSlider.max = 100;
+            }
+
+            // Weight
+            if (state.unit === 'metric') {
+                elements.weightVal.value = Math.round(state.weightKg);
+                elements.weightSlider.value = Math.round(state.weightKg);
+                elements.weightSlider.min = 20; elements.weightSlider.max = 200;
+            } else {
+                const lbs = Math.round(state.weightKg * 2.20462);
+                elements.weightVal.value = lbs;
+                elements.weightSlider.value = lbs;
+                elements.weightSlider.min = 40; elements.weightSlider.max = 500;
+            }
+        }
+
+        function calculateBMI(saveToHistory = false) {
+            const hM = state.heightCm / 100;
+            if (hM <= 0) return;
+
+            const bmi = parseFloat((state.weightKg / (hM * hM)).toFixed(1));
+            elements.bmiText.textContent = bmi;
+
+            // Animate Meter Arc (Dash offset: 440 is empty, 110 is full arc)
+            // Clamp BMI value between 10 and 40 for gauge display
+            const clampedBmi = Math.max(10, Math.min(40, bmi));
+            const percentage = (clampedBmi - 10) / (40 - 10);
+            const offset = 440 - (percentage * 330);
+            elements.gaugeMeter.style.strokeDashoffset = offset;
+
+            // Determine Category & Theme
+            let category = '';
+            let color = '';
+            let badgeClass = '';
+            let silhouettePathData = '';
+            let silhouetteLabel = '';
+            let advice = '';
+
+            if (bmi < 18.5) {
+                category = 'UNDERWEIGHT';
+                color = '#00f3ff';
+                badgeClass = 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 shadow-[0_0_15px_rgba(0,243,255,0.4)]';
+                silhouettePathData = "M50 20 C53 20 56 25 56 30 C56 35 53 40 50 40 C47 40 44 35 44 30 C44 25 47 20 50 20 Z M46 45 L54 45 C57 45 60 55 58 75 L55 120 L58 185 C58 190 55 195 52 195 L51 195 L51 130 L49 130 L49 195 L48 195 C45 195 42 190 42 185 L45 120 L42 75 C40 55 43 45 46 45 Z";
+                silhouetteLabel = 'Slender Frame';
+                advice = 'Your BMI indicates you are underweight. Consider increasing calorie consumption with nutrient-dense whole foods and progressive strength training.';
+            } else if (bmi >= 18.5 && bmi < 25) {
+                category = 'NORMAL HEALTHY RANGE';
+                color = '#00ff66';
+                badgeClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.4)]';
+                silhouettePathData = "M50 20 C55 20 60 25 60 30 C60 35 55 40 50 40 C45 40 40 35 40 30 C40 25 45 20 50 20 Z M42 45 L58 45 C64 45 68 55 66 75 L62 120 L66 185 C66 190 60 195 55 195 L52 195 L52 130 L48 130 L48 195 L45 195 C40 195 34 190 34 185 L38 120 L34 75 C32 55 36 45 42 45 Z";
+                silhouetteLabel = 'Optimal Athletic Frame';
+                advice = 'Your biometrics fall squarely into the optimal healthy range. Continue balanced physical activity, adequate sleep, and consistent hydration.';
+                if (saveToHistory) {
+                    audioFX.playFanfare();
+                    triggerFireworks();
+                }
+            } else if (bmi >= 25 && bmi < 30) {
+                category = 'OVERWEIGHT';
+                color = '#ffe600';
+                badgeClass = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.4)]';
+                silhouettePathData = "M50 20 C56 20 62 25 62 30 C62 35 56 40 50 40 C44 40 38 35 38 30 C38 25 44 20 50 20 Z M38 45 L62 45 C70 45 74 55 72 75 L66 120 L70 185 C70 190 63 195 56 195 L53 195 L53 130 L47 130 L47 195 L44 195 C37 195 30 190 30 185 L34 120 L28 75 C26 55 30 45 38 45 Z";
+                silhouetteLabel = 'Robust Build';
+                advice = 'Slightly above normal parameters. Incorporate cardiovascular endurance sessions and optimize dietary macro ratios to achieve your goal weight.';
+            } else {
+                category = 'OBESE RANGE';
+                color = '#ff007f';
+                badgeClass = 'bg-pink-500/20 text-pink-400 border-pink-500/50 shadow-[0_0_15px_rgba(255,0,127,0.4)]';
+                silhouettePathData = "M50 20 C58 20 64 25 64 30 C64 35 58 40 50 40 C42 40 36 35 36 30 C36 25 42 20 50 20 Z M34 45 L66 45 C76 45 80 55 78 75 L70 120 L74 185 C74 190 66 195 58 195 L54 195 L54 130 L46 130 L46 195 L42 195 C34 195 26 190 26 185 L30 120 L22 75 C20 55 24 45 34 45 Z";
+                silhouetteLabel = 'Heavy Silhouette';
+                advice = 'Your BMI indicates elevated health risk factors. Consult a healthcare professional or nutritionist for a structured wellness transformation protocol.';
+            }
+
+            elements.gaugeMeter.style.stroke = color;
+            elements.categoryBadge.className = `mt-1 px-6 py-2 rounded-full font-orbitron font-extrabold text-sm tracking-wider uppercase animate-pulse ${badgeClass}`;
+            elements.categoryBadge.textContent = category;
+
+            // Update Body Silhouette
+            elements.silhouettePath.setAttribute('d', silhouettePathData);
+            elements.silhouettePath.style.color = color;
+            elements.silhouetteLabel.textContent = silhouetteLabel;
+
+            // Recommendations
+            const minIdealKg = (18.5 * hM * hM).toFixed(1);
+            const maxIdealKg = (24.9 * hM * hM).toFixed(1);
+            
+            if (state.unit === 'metric') {
+                elements.idealWeightVal.textContent = `${minIdealKg} - ${maxIdealKg} kg`;
+            } else {
+                elements.idealWeightVal.textContent = `${Math.round(minIdealKg * 2.20462)} - ${Math.round(maxIdealKg * 2.20462)} lbs`;
+            }
+
+            // Water Target (Approx 35ml per kg)
+            const waterLiters = ((state.weightKg * 35) / 1000).toFixed(2);
+            elements.waterIntakeVal.textContent = `${waterLiters} Liters`;
+
+            // Estimated BMR (Mifflin-St Jeor formula)
+            let bmr = Math.round((10 * state.weightKg) + (6.25 * state.heightCm) - (5 * state.age));
+            bmr += state.gender === 'male' ? 5 : -161;
+            elements.bmrVal.textContent = `${bmr.toLocaleString()} kcal`;
+
+            elements.healthAdviceText.textContent = advice;
+
+            if (saveToHistory) {
+                saveHistoryLog({ bmi, category, date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+            }
+        }
+
+        function saveHistoryLog(log) {
+            let history = JSON.parse(localStorage.getItem('neo_bmi_history') || '[]');
+            history.unshift(log);
+            if (history.length > 4) history.pop();
+            localStorage.setItem('neo_bmi_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('neo_bmi_history') || '[]');
+            elements.historyContainer.innerHTML = '';
+
+            if (history.length === 0) {
+                elements.historyContainer.innerHTML = `
+                    <div class="col-span-full text-center py-6 text-slate-500 font-orbitron text-sm">
+                        NO NEURAL DIAGNOSTIC LOGS FOUND IN LOCAL STORAGE.
+                    </div>
+                `;
+                return;
+            }
+
+            history.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-slate-400 font-orbitron">LOG #${index + 1} // ${item.date}</span>
+                        <span class="text-xs font-bold font-orbitron text-cyan-400">${item.category}</span>
+                    </div>
+                    <div class="flex items-end justify-between">
+                        <span class="text-3xl font-black font-orbitron text-pink-400">${item.bmi}</span>
+                        <div class="w-20 bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-cyan-400 h-full" style="width: ${Math.min(100, (item.bmi / 40) * 100)}%"></div>
+                        </div>
+                    </div>
+                `;
+                elements.historyContainer.appendChild(card);
+            });
+        }
+
+        function openReceiptModal() {
+            audioFX.playClick();
+            const now = new Date();
+            document.getElementById('receipt-date').textContent = `${now.toISOString().split('T')[0]} // ${now.toLocaleTimeString()}`;
+            document.getElementById('receipt-demo').textContent = `${state.age} YRS / ${state.gender.toUpperCase()}`;
+            
+            if (state.unit === 'metric') {
+                document.getElementById('receipt-metrics').textContent = `${Math.round(state.heightCm)} cm / ${Math.round(state.weightKg)} kg`;
+            } else {
+                document.getElementById('receipt-metrics').textContent = `${Math.round(state.heightCm / 2.54)} in / ${Math.round(state.weightKg * 2.20462)} lbs`;
+            }
+
+            document.getElementById('receipt-bmi').textContent = elements.bmiText.textContent;
+            document.getElementById('receipt-status').textContent = elements.categoryBadge.textContent;
+
+            elements.receiptModal.classList.remove('hidden');
+        }
+
+        // Initialize App
+        window.onload = () => {
+            initParticles();
+            animateParticles();
+            bindEvents();
+            updateInputs();
+            calculateBMI();
+            renderHistory();
+        };
+    </script>
+</body>
+</html>
